@@ -1,0 +1,120 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../lib/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String?   @unique
+  emailVerified DateTime?
+  image         String?
+  accounts      Account[]
+  sessions      Session[]
+  workflows     Workflow[]
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+model Workflow {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  triggerType String
+  status      String   @default("draft")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Fields for agent and Pipedream output configuration
+  agentId             String?  // ID of the agent to run
+  agentInput          Json?    // Default input for the agent
+  outputPipedreamAppSlug String?  // Slug of the Pipedream app to send output to
+  outputPipedreamConnectedAccountId String? // Connected account ID for Pipedream
+  outputConfiguration Json?    // Configuration for the Pipedream output
+
+  steps WorkflowStep[]
+  runs  WorkflowRun[]
+}
+
+model WorkflowStep {
+  id                  String  @id @default(cuid())
+  workflowId          String
+  workflow            Workflow @relation(fields: [workflowId], references: [id], onDelete: Cascade)
+  order               Int
+  name                String
+  agentId             String?
+  inputConnectedAppProvider String?
+  inputSourceDetail   String?
+  inputConfigJson     String?
+  outputConnectedAppProvider String?
+  outputTargetDetail  String?
+  outputConfigJson    String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([workflowId, order])
+}
+
+model WorkflowRun {
+  id           String   @id @default(cuid())
+  workflowId   String
+  workflow     Workflow @relation(fields: [workflowId], references: [id], onDelete: Cascade)
+  userId       String   // To scope access and associate with the user who initiated it
+  status       String   // e.g., "queued", "processing", "completed", "failed"
+  bullJobId    String?  @unique // BullMQ job ID for tracking
+
+  agentInput   Json?    // Copy of the input at the time of run
+  agentOutput  Json?    // Result from the agent
+
+  logs         Json?    // Store logs as a JSON array compatible with SQLite
+  errorMessage String?
+
+  enqueuedAt   DateTime @default(now())
+  startedAt    DateTime?
+  completedAt  DateTime?
+  updatedAt    DateTime @updatedAt
+}
