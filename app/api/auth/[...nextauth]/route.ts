@@ -13,25 +13,82 @@ export const authOptions: NextAuthOptions = {
       clientId: process.env.GOOGLE_CLIENT_ID!,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
     }),
-    // Add other providers here if needed
   ],
   secret: process.env.NEXTAUTH_SECRET,
+  
+  // Use secure cookies and trust host for production
+  useSecureCookies: true,
+  
+  // Configure cookies for production with HTTPS
+  cookies: {
+    sessionToken: {
+      name: `__Secure-next-auth.session-token`,
+      options: {
+        httpOnly: true,
+        sameSite: 'lax',
+        path: '/',
+        secure: true,
+        domain: '.naptha.us' // This should work for groundwork.naptha.us
+      }
+    },
+    callbackUrl: {
+      name: `__Secure-next-auth.callback-url`,
+      options: {
+        sameSite: 'lax',
+        path: '/',
+        secure: true
+      }
+    },
+    csrfToken: {
+      name: `__Host-next-auth.csrf-token`,
+      options: {
+        httpOnly: true,
+        sameSite: 'lax',
+        path: '/',
+        secure: true
+      }
+    },
+    pkceCodeVerifier: {
+      name: `__Secure-next-auth.pkce.code_verifier`,
+      options: {
+        httpOnly: true,
+        sameSite: 'lax',
+        path: '/',
+        secure: true,
+        maxAge: 900 // 15 minutes
+      }
+    },
+    state: {
+      name: `__Secure-next-auth.state`,
+      options: {
+        httpOnly: true,
+        sameSite: 'lax',
+        path: '/',
+        secure: true,
+        maxAge: 900 // 15 minutes
+      }
+    },
+    nonce: {
+      name: `__Secure-next-auth.nonce`,
+      options: {
+        httpOnly: true,
+        sameSite: 'lax',
+        path: '/',
+        secure: true
+      }
+    }
+  },
+  
   callbacks: {
     async session({ session, user }) {
-      // Send properties to the client, like an access_token and user.id from a provider.
-      // The user object here is the user from the database.
       if (session.user) {
-        session.user.id = user.id; // Add the user's DB ID to the session object
+        session.user.id = user.id;
       }
       return session;
     }
   }
-  // You can add other configurations like pages for custom sign-in, etc.
-  // pages: {
-  //   signIn: '/auth/signin',
-  // }
 };
 
 const handler = NextAuth(authOptions);
 
-export { handler as GET, handler as POST }; 
+export { handler as GET, handler as POST };
