@@ -1,9 +1,9 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useTransition } from "react";
 import { useSession, signOut } from "next-auth/react";
 import Link from "next/link";
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import Image from 'next/image';
 import {
   LayoutDashboard,
@@ -13,7 +13,8 @@ import {
   Settings,
   LogOut,
   Rocket,
-  ClipboardList
+  ClipboardList,
+  Loader2
 } from 'lucide-react';
 
 const menuItems = [
@@ -28,11 +29,32 @@ const menuItems = [
 export default function Sidebar() {
   const { data: session } = useSession();
   const pathname = usePathname();
+  const router = useRouter();
   const [isMounted, setIsMounted] = useState(false);
+  const [isPending, startTransition] = useTransition();
+  const [pendingPath, setPendingPath] = useState<string | null>(null);
 
   useEffect(() => {
     setIsMounted(true);
   }, []);
+
+  useEffect(() => {
+    if (!isPending) {
+      setPendingPath(null);
+    }
+  }, [isPending]);
+
+  const handleLinkClick = (targetPath: string, currentIsActive: boolean, e: React.MouseEvent) => {
+    if (currentIsActive || (isPending && pendingPath === targetPath)) {
+      e.preventDefault();
+      return;
+    }
+    e.preventDefault();
+    setPendingPath(targetPath);
+    startTransition(() => {
+      router.push(targetPath);
+    });
+  };
 
   return (
     <div className="w-64 bg-card-bg p-4 flex flex-col space-y-2 border-r border-neutral-text-secondary/10">
@@ -64,17 +86,25 @@ export default function Sidebar() {
         <ul className="space-y-1">
           {menuItems.map((item) => {
             const isActive = pathname.startsWith(item.path);
+            const isLoading = isPending && pendingPath === item.path;
             return (
               <li key={item.name}>
-                <Link 
-                  href={item.path} 
+                <Link
+                  href={item.path}
+                  onClick={(e) => handleLinkClick(item.path, isActive, e)}
                   className={`w-full flex items-center space-x-3 p-2.5 rounded-md text-sm hover:bg-accent-blue/20 transition-colors duration-150 ${
                     isActive
                       ? "bg-accent-blue text-white font-medium shadow-sm"
                       : "text-neutral-text-secondary hover:text-neutral-text-primary"
-                  }`}
+                  } ${isLoading ? "cursor-default" : ""}`}
+                  aria-current={isActive ? "page" : undefined}
+                  aria-disabled={isLoading || isActive}
                 >
-                  <item.icon size={18} />
+                  {isLoading ? (
+                    <Loader2 size={18} className="animate-spin" />
+                  ) : (
+                    <item.icon size={18} />
+                  )}
                   <span>{item.name}</span>
                 </Link>
               </li>
