@@ -47,6 +47,7 @@ export default function DashboardHeader(/* { currentSectionTitle }: DashboardHea
               variant={null}
               className="flex items-center space-x-2 bg-gradient-primary text-white hover:opacity-90 transition-opacity"
               icon={<PlusCircle size={17} className="mr-2" />}
+              disabled={pathname === "/dashboard/connect"}
             >
               New Connection
             </CreateWorkflowButtonClient>
@@ -55,6 +56,7 @@ export default function DashboardHeader(/* { currentSectionTitle }: DashboardHea
               size="sm"
               className="flex items-center space-x-2 bg-gradient-primary text-white hover:opacity-90 transition-opacity"
               icon={<PlusCircle size={17} className="mr-2" />}
+              disabled={pathname === "/dashboard/workflows/new"}
             >
               New Workflow
             </CreateWorkflowButtonClient>
