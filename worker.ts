@@ -9,6 +9,7 @@ import { availableAgents } from '@/lib/agents';
 import { createBackendClient } from '@pipedream/sdk/server';
 
 const { DeepResearchMarketingAgent } = require('./worker/deepResearchMarketingAgent/agent.js');
+const { HackerNewsAgent } = require('./worker/hackerNewsAgent/agent.js');
 
 console.log(`🚀 Worker for queue [${WORKFLOW_QUEUE_NAME}] starting...`);
 
@@ -44,20 +45,7 @@ async function executeJsAgent(agentId: string, agentInput: any): Promise<any> {
     const agentDefinition = availableAgents.find(a => a.id === agentId);
     if (!agentDefinition) throw new Error(`Agent definition for ${agentId} not found.`);
 
-
-    if (agentId === "js-text-summarizer") {
-        const textToSummarize = agentInput?.text_to_summarize || "This is a long sample text that needs summarization by our awesome JS agent.";
-        // Simulate work
-        await new Promise(resolve => setTimeout(resolve, 200 + Math.random() * 100));
-        return { summary: `JS Summary of: ${textToSummarize.substring(0, 30)}...` };
-    } else if (agentId === "js-sentiment-analyzer") {
-        const textToAnalyze = agentInput?.text_to_analyze || "This is a sample text for sentiment analysis.";
-        // Simulate work
-        await new Promise(resolve => setTimeout(resolve, 200 + Math.random() * 100));
-        const sentiments = ["positive", "negative", "neutral"];
-        const randomSentiment = sentiments[Math.floor(Math.random() * sentiments.length)];
-        return { sentiment: randomSentiment, confidence: Math.random() * 0.5 + 0.5 };
-    } else if (agentId === "deep-research-marketing-agent") {
+    if (agentId === "deep-research-marketing-agent") {
         console.log(`[Worker] Preparing to execute DeepResearchMarketingAgent.`);
         if (!agentInput) { // Should be validated before job creation ideally, but good to check
             throw new Error('Agent input is missing for deep-research-marketing-agent');
@@ -66,6 +54,21 @@ async function executeJsAgent(agentId: string, agentInput: any): Promise<any> {
         // The agentInput should match the structure expected by createSocialMediaPost
         // { userQuery, targetAudience, toneStyle, keyMessageAngle, callToAction, useCitations, perplexityMaxOutputTokens }
         return await agent.createSocialMediaPost(agentInput);
+    } else if (agentId === "hacker-news-summary-agent") {
+        console.log(`[Worker] Preparing to execute HackerNewsAgent.`);
+        // agentInput from Groundwork will be passed as the configuration to the HackerNewsAgent constructor.
+        // If agentInput is null or undefined, an empty object should be passed to use default agent config.
+        const agentConfig = agentInput || {};
+        const agent = new HackerNewsAgent(agentConfig);
+        try {
+            const result = await agent.run();
+            // The agent's run() method returns a report object.
+            // This object will be the output of the executeJsAgent function.
+            return result;
+        } catch (error: any) {
+            console.error(`[Worker] Error executing HackerNewsAgent: ${error.message}`, error);
+            throw new Error(`HackerNewsAgent execution failed: ${error.message}`);
+        }
     }
     // Add more agent logic
     throw new Error(`Execution logic for agent ${agentId} not implemented.`);
@@ -125,19 +128,24 @@ async function sendToPipedreamApp(
             };
         }
     } else if (pipedreamAppSlug === 'slack') {
-        // Assuming outputConfiguration for Slack will also have an 'action', e.g., 'postMessage'
-        if (outputConfiguration?.action === 'postMessage' && outputConfiguration?.channelId) {
-            const message = `Workflow Result: \`\`\`${JSON.stringify(data, null, 2)}\`\`\``;
-            requestDetails = {
-                method: 'POST',
-                url: 'https://slack.com/api/chat.postMessage',
-                body: {
-                    channel: outputConfiguration.channelId,
-                    text: message,
-                },
-                headers: commonHeaders
-            };
-        }
+        const { channelId } = outputConfiguration;
+        const markdownReport = data; // Assuming data is the already formatted and escaped markdown string
+
+        // Log the exact markdown report content before sending - useful for debugging
+        // console.log("[Worker] Attempting to send to Slack. Markdown Report Content (for top-level text):\n", JSON.stringify(markdownReport, null, 2));
+
+        requestDetails = {
+            method: 'POST',
+            url: 'https://slack.com/api/chat.postMessage', // Using direct Slack API endpoint
+            body: {
+                channel: channelId,
+                text: markdownReport, // Send the full markdown report in the top-level text field
+                mrkdwn: true // Explicitly enable markdown processing for the text field
+            },
+            headers: {
+                'Content-Type': 'application/json; charset=utf-8'
+            }
+        };
     }
 
     if (!requestDetails) {
