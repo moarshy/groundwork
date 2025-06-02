@@ -6,12 +6,15 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { PipedreamConnectedAccount } from "@/types/pipedream";
 
+// Force dynamic rendering to avoid build-time issues
+export const dynamic = 'force-dynamic';
+
 // No longer need to import individual icons here, client component handles it.
 
 // Define the apps you want to offer for connection
 // The `slug` should match Pipedream's app slug (e.g., 'google_sheets', 'slack')
 // The `iconName` should match a valid Lucide icon name as used in your Icon component / iconMap
-export const desirableAppIntegrations = [
+const desirableAppIntegrations = [
   {
     name: "Google Sheets",
     slug: "google_sheets",

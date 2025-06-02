@@ -22,17 +22,23 @@ import {
   Bot,
   Zap,
   Eye,
-  MoreHorizontal
+  MoreHorizontal,
+  AlertTriangle
 } from "lucide-react";
 import { notFound } from 'next/navigation';
 import { cn } from "@/lib/utils";
 import WorkflowActionsClient from "./WorkflowActionsClient";
+import { getServerSession } from "next-auth/next";
+import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 
-// The params prop itself might be a Promise-like object in newer Next.js versions for Server Components
-export default async function WorkflowDetailsPage({ params }: { params: Promise<{ workflowId: string }> | { workflowId: string } }) {
-  // Await params to get the actual object with workflowId
-  const resolvedParams = await params;
-  const { workflowId } = resolvedParams;
+export default async function WorkflowDetailsPage({ params }: { params: Promise<{ workflowId: string }> }) {
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.id) {
+    return notFound();
+  }
+
+  // Await the params Promise
+  const { workflowId } = await params;
 
   let workflow;
   try {

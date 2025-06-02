@@ -15,8 +15,16 @@ const getStatusBadgeVariant = (status: string): 'default' | 'secondary' | 'destr
     return "secondary";
 };
 
-export default async function RunDetailsPage({ params }: { params: { runId: string } }) {
-    const run = await getWorkflowRunDetails(params.runId);
+// Updated to properly handle Promise-based params in Next.js App Router
+export default async function RunDetailsPage({ 
+    params 
+}: { 
+    params: Promise<{ runId: string }> 
+}) {
+    // Await the params Promise
+    const { runId } = await params;
+    
+    const run = await getWorkflowRunDetails(runId);
 
     if (!run) {
         notFound();
@@ -93,4 +101,4 @@ export default async function RunDetailsPage({ params }: { params: { runId: stri
             </Card>
         </div>
     );
-} 
+}

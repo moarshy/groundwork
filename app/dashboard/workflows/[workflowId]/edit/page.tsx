@@ -7,6 +7,9 @@ import { prisma } from "@/lib/prisma";
 import EditWorkflowClientPage from './EditWorkflowClientPage';
 import type { Workflow } from "@/lib/generated/prisma";
 
+// Force dynamic rendering to avoid build-time issues
+export const dynamic = 'force-dynamic';
+
 interface EditWorkflowPageProps {
   params: Promise<{
     workflowId: string;
@@ -14,6 +17,7 @@ interface EditWorkflowPageProps {
 }
 
 export default async function EditWorkflowPage({ params }: EditWorkflowPageProps) {
+  // Await the params Promise
   const { workflowId } = await params;
   
   const session = await getServerSession(authOptions);

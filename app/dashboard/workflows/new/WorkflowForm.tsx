@@ -673,7 +673,7 @@ export default function WorkflowForm({ pipedreamAccounts, userId, initialWorkflo
                 }} 
                 required
               >
-                <SelectTrigger id="agentSelect" className="bg-card text-card-foreground">
+                <SelectTrigger id="agentSelect" className="w-full bg-card text-card-foreground">
                   <SelectValue>
                     {selectedAgentId ? availableAgents.find(agent => agent.id === selectedAgentId)?.name : "Choose an AI agent..."}
                   </SelectValue>
@@ -785,7 +785,7 @@ export default function WorkflowForm({ pipedreamAccounts, userId, initialWorkflo
                 }} 
                 required
               >
-                <SelectTrigger id="pipedreamAccountSelect" className="bg-card text-card-foreground">
+                <SelectTrigger id="pipedreamAccountSelect" className="w-full bg-card text-card-foreground">
                   <SelectValue>
                     {selectedPipedreamAccountId && selectedPipedreamAccountId !== "_" 
                       ? pipedreamAccounts.find(acc => acc.id === selectedPipedreamAccountId)?.app 

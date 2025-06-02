@@ -5,6 +5,9 @@ import WorkflowForm from "./WorkflowForm";
 import { redirect } from "next/navigation";
 import { PipedreamConnectedAccount } from "@/types/pipedream";
 
+// Force dynamic rendering to avoid build-time issues
+export const dynamic = 'force-dynamic';
+
 export default async function NewWorkflowPage() {
   const session = await getServerSession(authOptions); 
   if (!session || !session.user?.id) {
@@ -17,9 +20,8 @@ export default async function NewWorkflowPage() {
     console.log("[Server Component] Fetched Pipedream Accounts:", JSON.stringify(pipedreamAccounts, null, 2));
   } catch (error) {
     console.error("Failed to fetch Pipedream accounts:", error);
-    // Optionally, show a toast or error message to the user here, 
-    // though this is a server component, so direct toast is not possible.
-    // You might pass an error state to the WorkflowForm.
+    // During build or when Pipedream is not configured, just continue with empty array
+    // The WorkflowForm will handle the empty state appropriately
   }
   
   return (
