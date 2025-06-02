@@ -1,15 +1,16 @@
 import { type LucideIcon } from 'lucide-react';
 // Import icons you'll use, similar to your iconMap in ConnectPageClient
-import { Bot, MessageSquare, TextCursorInput, BarChart3, Mail, BrainCircuit } from 'lucide-react';
+import { Bot, BarChart3, Mail, BrainCircuit, Newspaper, Rss, FileText } from 'lucide-react';
 
 // If you want to use your existing iconMap approach:
 export const agentIconMap = {
   Bot,
-  MessageSquare,
-  TextCursorInput,
   BarChart3,
   Mail,
   BrainCircuit,
+  Newspaper,
+  Rss,
+  FileText,
   // Add other icons agents might use
 };
 
@@ -27,27 +28,6 @@ export interface Agent {
 }
 
 export const availableAgents: Agent[] = [
-  {
-    id: "js-text-summarizer",
-    name: "JavaScript Text Summarizer",
-    iconName: "TextCursorInput",
-    description: "Condenses long texts into brief summaries using JS.",
-    longDescription: "This agent uses a JavaScript-based NLP technique to extract key information and generate concise summaries from articles or text blocks. Ideal for quick insights.",
-    inputsExpected: ["text_to_summarize"],
-    outputsProvided: ["Summarized text (string)"],
-    category: "Natural Language Processing",
-  },
-  {
-    id: "js-sentiment-analyzer",
-    name: "JavaScript Sentiment Analyzer",
-    iconName: "MessageSquare",
-    description: "Determines sentiment (positive, negative, neutral) of text.",
-    longDescription: "Analyzes text to identify the underlying emotional tone. Useful for understanding customer feedback, social media comments, or product reviews, implemented purely in JavaScript.",
-    inputsExpected: ["text_to_analyze"],
-    outputsProvided: ["Sentiment (string: 'positive' | 'negative' | 'neutral')", "Confidence score (number)"],
-    category: "Text Analysis",
-  },
-  // Add more JavaScript agents
   {
     id: "deep-research-marketing-agent",
     name: "Deep Research Marketing Agent",
@@ -70,5 +50,26 @@ export const availableAgents: Agent[] = [
       "citations_used_in_generation (array): List of citations passed to the post generator if useCitations was true."
     ],
     category: "Content Generation & Research",
+  },
+  {
+    id: "hacker-news-summary-agent",
+    name: "AI Hacker News Summarizer",
+    iconName: "Newspaper",
+    description: "Fetches top Hacker News stories and summarizes them using AI.",
+    longDescription: "This agent retrieves the latest top stories from Hacker News, fetches their content (and optionally comments), and uses an AI model (OpenAI GPT) to provide concise summaries of articles and discussions. Helps you stay updated with tech trends and insights quickly.",
+    inputsExpected: [
+      "maxStories (number, optional, default: 10): Number of top stories to process.",
+      "timeout (number, optional, default: 30000): Timeout in milliseconds for fetching article content.",
+      "rateLimitDelay (number, optional, default: 300): Delay in ms between HN API calls.",
+      "summarizeComments (boolean, optional, default: true): Whether to summarize comments using AI.",
+      "maxComments (number, optional, default: 8): Maximum comments to fetch per story if summarizing.",
+      "minCommentsForSummary (number, optional, default: 2): Minimum comments needed to trigger comment summary.",
+      "maxConcurrentStories (number, optional, default: 3): Number of stories to process in parallel.",
+      "maxConcurrentOpenAICalls (number, optional, default: 5): Max concurrent calls to OpenAI API."
+    ],
+    outputsProvided: [
+      "markdownReport (string): A formatted Markdown string summarizing the Hacker News stories."
+    ],
+    category: "Content & News",
   },
 ]; 
