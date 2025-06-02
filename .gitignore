@@ -48,3 +48,4 @@ google-oauth-creds.json
 /lib/generated/prisma
 *.db
 *.db-journal
+data/

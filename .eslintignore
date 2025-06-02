@@ -1,0 +1,33 @@
+# Dependencies
+node_modules/
+.next/
+out/
+dist/
+build/
+
+# Generated files (Prisma)
+lib/generated/
+**/*.generated.*
+.prisma/
+
+# Build outputs
+.next/
+.vercel/
+.turbo/
+
+# Runtime files
+*.wasm.js
+**/*runtime*
+
+# Environment and config files  
+.env*
+*.log
+
+# Lock files
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# OS files
+.DS_Store
+Thumbs.db
