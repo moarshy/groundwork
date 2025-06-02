@@ -126,3 +126,28 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* Custom text selection for better visibility - more specific and important */
+input[type="text"],
+input[type="email"],
+textarea {
+  -webkit-user-select: auto !important; /* Safari/Chrome */
+  -moz-user-select: text !important;    /* Firefox - 'text' is more appropriate */
+  -ms-user-select: auto !important;     /* IE/Edge */
+  user-select: auto !important;         /* Standard */
+}
+
+input[type="text"]::selection,
+input[type="email"]::selection, /* Add other input types if needed */
+textarea::selection {
+  background-color: #007bff !important;
+  color: white !important;
+}
+
+/* For Firefox - more specific and important */
+input[type="text"]::-moz-selection,
+input[type="email"]::-moz-selection,
+textarea::-moz-selection {
+  background-color: #007bff !important;
+  color: white !important;
+}
