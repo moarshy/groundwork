@@ -39,10 +39,10 @@ export default async function WorkflowsPage() {
     <div className="flex-1 space-y-6 p-4 md:p-8 pt-6">
       <div className="flex items-center justify-between space-y-2">
         <h2 className="text-3xl font-bold tracking-tight text-foreground">Workflows</h2>
-        <CreateWorkflowButtonClient 
+        <CreateWorkflowButtonClient
           href="/dashboard/workflows/new"
           variant="default"
-          className="flex items-center space-x-2"
+          className="flex items-center space-x-2 border border-input"
           icon={<PlusCircle size={18} className="mr-2" />}
         >
           Create New Workflow
