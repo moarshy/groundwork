@@ -100,11 +100,33 @@ async function sendToPipedreamApp(
     if (pipedreamAppSlug === 'google_sheets') {
         console.log('[Worker] Received outputConfiguration for google_sheets:', JSON.stringify(outputConfiguration, null, 2));
         if (outputConfiguration?.action === 'appendRow' && outputConfiguration?.spreadsheetId && outputConfiguration?.sheetName) {
+            // Handle different data types properly for Google Sheets
+            let rowValues: any[];
+            
+            console.log('[Worker] Raw agent data type:', typeof data);
+            console.log('[Worker] Raw agent data preview:', typeof data === 'string' ? data.substring(0, 200) + '...' : JSON.stringify(data).substring(0, 200) + '...');
+            
+            if (typeof data === 'string') {
+                // If data is a string (like markdown report), put it in a single cell with timestamp
+                rowValues = [new Date().toISOString(), data];
+            } else if (typeof data === 'object' && data !== null) {
+                // If data is an object, convert to array but ensure all values are primitives
+                rowValues = Object.values(data).map(value => {
+                    if (typeof value === 'object' && value !== null) {
+                        return JSON.stringify(value); // Convert objects/arrays to JSON strings
+                    }
+                    return value;
+                });
+            } else {
+                // For primitives, just wrap in array
+                rowValues = [data];
+            }
+            
             requestDetails = {
                 method: 'POST',
                 url: `https://sheets.googleapis.com/v4/spreadsheets/${outputConfiguration.spreadsheetId}/values/${outputConfiguration.sheetName}!A1:append?valueInputOption=USER_ENTERED&insertDataOption=INSERT_ROWS`,
                 body: {
-                    values: [Object.values(data)], // Agent output converted to an array of values for a row
+                    values: [rowValues], // Properly formatted row data
                 },
                 headers: commonHeaders
             };
