@@ -1,0 +1,91 @@
+version: '3.8'
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile.nextapp
+      args:
+        NODE_VERSION: 18-alpine
+    container_name: groundwork-app
+    ports:
+      - "3000:3000"
+    env_file:
+      - .env.local
+    volumes:
+      - ./data:/app/data
+    depends_on:
+      - redis
+      - prisma-migrate
+    environment:
+      - DATABASE_URL=file:/app/data/dev.db
+      - REDIS_URL=redis://redis:6379
+      - PIPEDREAM_ENVIRONMENT=development
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  worker:
+    build:
+      context: .
+      dockerfile: Dockerfile.worker
+      args:
+        NODE_VERSION: 18-alpine
+    container_name: groundwork-worker
+    env_file:
+      - .env.local
+    volumes:
+      - ./data:/app/data
+    depends_on:
+      - redis
+      - prisma-migrate
+    environment:
+      - DATABASE_URL=file:/app/data/dev.db
+      - REDIS_URL=redis://redis:6379
+      - PIPEDREAM_ENVIRONMENT=development
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+    restart: unless-stopped
+
+  redis:
+    image: redis:alpine
+    container_name: groundwork-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    restart: unless-stopped
+    command: redis-server --appendonly yes
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+
+  prisma-migrate:
+    build:
+      context: .
+      dockerfile: Dockerfile.worker
+      args:
+        NODE_VERSION: 18-alpine
+    container_name: groundwork-prisma-migrate
+    env_file:
+      - .env.local
+    environment:
+      - DATABASE_URL=file:/app/data/dev.db
+    volumes:
+      - ./data:/app/data
+      - ./prisma:/app/prisma
+    command: ["npx", "prisma", "migrate", "deploy"]
+    restart: "no"
+
+volumes:
+  redis-data:
+
+networks:
+  default:
+    name: groundwork-network 

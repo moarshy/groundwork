@@ -1,0 +1,41 @@
+# Dockerfile.worker
+ARG NODE_VERSION=18-alpine
+
+FROM node:${NODE_VERSION} AS base
+WORKDIR /app
+
+# Install dependencies only when needed
+FROM base AS deps
+# Install libc6-compat for Alpine compatibility
+RUN apk add --no-cache libc6-compat
+
+COPY package.json package-lock.json* ./
+# Use npm ci for faster, reliable, reproducible builds
+RUN npm ci
+
+# Production image for worker
+FROM base AS runner
+WORKDIR /app
+
+ENV NODE_ENV=production
+
+# Create a non-root user to run the app
+RUN addgroup --system --gid 1001 nodejs
+RUN adduser --system --uid 1001 worker
+
+# Copy node_modules from deps stage
+COPY --from=deps /app/node_modules ./node_modules
+
+# Copy all source files (needed for tsx to run TypeScript directly)
+COPY . .
+
+# Generate Prisma Client
+RUN npx prisma generate
+
+# Change ownership to worker user
+RUN chown -R worker:nodejs /app
+
+USER worker
+
+# Command to run the worker using tsx
+CMD ["npm", "run", "worker:start"] 

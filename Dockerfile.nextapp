@@ -1,0 +1,65 @@
+# Dockerfile.nextapp
+ARG NODE_VERSION=18-alpine
+
+FROM node:${NODE_VERSION} AS base
+WORKDIR /app
+
+# Install dependencies only when needed
+FROM base AS deps
+# Install libc6-compat for Alpine compatibility
+RUN apk add --no-cache libc6-compat
+
+COPY package.json package-lock.json* ./
+# Use npm ci for faster, reliable, reproducible builds
+RUN npm ci
+
+# Rebuild the source code only when needed
+FROM base AS builder
+WORKDIR /app
+COPY --from=deps /app/node_modules ./node_modules
+COPY . .
+
+# Generate Prisma Client (needs to happen before build)
+RUN npx prisma generate
+
+# Disable Next.js telemetry during build
+ENV NEXT_TELEMETRY_DISABLED 1
+
+# Build Next.js app
+RUN npm run build
+
+# Production image, copy all the files and run next
+FROM node:${NODE_VERSION} AS runner
+WORKDIR /app
+
+ENV NODE_ENV=production
+ENV NEXT_TELEMETRY_DISABLED 1
+
+# Create a non-root user to run the app
+RUN addgroup --system --gid 1001 nodejs
+RUN adduser --system --uid 1001 nextjs
+
+# Copy the built application
+COPY --from=builder /app/public ./public
+
+# Set the correct permission for prerender cache
+RUN mkdir .next
+RUN chown nextjs:nodejs .next
+
+# Automatically leverage output traces to reduce image size
+# https://nextjs.org/docs/advanced-features/output-file-tracing
+COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
+COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+
+# Copy package.json for reference
+COPY --from=builder /app/package.json ./package.json
+
+USER nextjs
+
+EXPOSE 3000
+
+ENV PORT 3000
+ENV HOSTNAME "0.0.0.0"
+
+# Command to run the app
+CMD ["node", "server.js"] 

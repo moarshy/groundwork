@@ -2,6 +2,20 @@ import type { NextConfig } from "next";
 
 /** @type {import('next').NextConfig} */
 const nextConfig: NextConfig = {
+  // Enable standalone output for Docker deployment
+  output: 'standalone',
+  
+  // Skip ESLint during builds to speed up deployment
+  // Remove this line if you want ESLint to run during builds
+  eslint: {
+    ignoreDuringBuilds: true,
+  },
+  
+  // Keep TypeScript checking enabled (recommended)
+  typescript: {
+    ignoreBuildErrors: false,
+  },
+
   images: {
     remotePatterns: [
       {
@@ -17,6 +31,18 @@ const nextConfig: NextConfig = {
         pathname: '/a/**',
       },
     ],
+  },
+
+  // Optimize webpack to handle BullMQ warnings
+  webpack: (config, { dev, isServer }) => {
+    if (!dev && !isServer) {
+      config.resolve.fallback = {
+        ...config.resolve.fallback,
+        fs: false,
+        child_process: false,
+      };
+    }
+    return config;
   },
 };
 
